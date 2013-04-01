@@ -62,8 +62,6 @@ Sub CreateForecast()
     [K2].Formula = "=IFERROR(VLOOKUP(A2,Gaps!A:AM,39,FALSE),"""")"
     [K2].AutoFill Destination:=Range(Cells(2, 11), Cells(iRows, 11))
 
-
-
     'Months
     aMonths = Array("=Temp!C1", _
                     "=Temp!D1", _
@@ -77,6 +75,7 @@ Sub CreateForecast()
                     "=Temp!L1", _
                     "=Temp!M1", _
                     "=Temp!N1")
+
     Range("L1:W1").Formula = aMonths
     Range("L1:W1").NumberFormat = "mmm-yy"
 
@@ -192,6 +191,7 @@ Sub CreateForecast()
     ActiveSheet.UsedRange.Columns.AutoFit
     Range("A1").Select
 
+    'Sort by SIM
     ActiveWorkbook.Worksheets("Forecast").ListObjects("Table1").Sort.SortFields.Clear
     ActiveWorkbook.Worksheets("Forecast").ListObjects("Table1").Sort.SortFields.Add Key:= _
                                                                                     Range("Table1[[#All],[SIM]]"), _
@@ -219,6 +219,20 @@ Sub CreateForecast()
 
     Range(Cells(1, 12), Cells(iRows, 14)).Value = Range(Cells(1, 12), Cells(iRows, 14)).Value
     
+    'Sort by LT Days
+    ActiveWorkbook.Worksheets("Forecast").ListObjects("Table1").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Forecast").ListObjects("Table1").Sort.SortFields.Add Key:=Range("Table1[[#All],[LT/Days]]"), _
+                                                                                    SortOn:=xlSortOnValues, _
+                                                                                    Order:=xlDescending, _
+                                                                                    DataOption:=xlSortNormal
+    With ActiveWorkbook.Worksheets("Forecast").ListObjects("Table1").Sort
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+
     ActiveSheet.UsedRange.Columns.AutoFit
 End Sub
 

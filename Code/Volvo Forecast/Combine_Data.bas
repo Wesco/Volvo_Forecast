@@ -66,29 +66,6 @@ Sub CreatePivotTable()
     Sheets("PivotTable").Select
     Cells(1, 1).Select
     
-    'Combine by SIM/Part
-    '    With ActiveSheet.PivotTables("PivotTable1")
-    '        .PivotFields("SIM").Orientation = xlRowField
-    '        .PivotFields("SIM").LayoutForm = xlTabular
-    '        .PivotFields("SIM").Subtotals = Array(False, False, False, False, False, False, False, False, False, False, False, False)
-    '        .PivotFields("SIM").Position = 1
-    '        .PivotFields("EDCSPT").Orientation = xlRowField
-    '        .PivotFields("EDCSPT").LayoutForm = xlTabular
-    '        .PivotFields("EDCSPT").Position = 2
-    '        .AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("QTYDU"), "Sum of QTYDU", xlSum
-    '        .PivotFields("DUEDT").Orientation = xlColumnField
-    '        .PivotFields("DUEDT").Position = 1
-    '    End With
-
-    'Combine by Part
-    '    With ActiveSheet.PivotTables("PivotTable1")
-    '        .PivotFields("EDCSPT").Orientation = xlRowField
-    '        .PivotFields("EDCSPT").Position = 1
-    '        .AddDataField .PivotFields("QTYDU"), "Sum of QTYDU", xlSum
-    '        .PivotFields("DUEDT").Orientation = xlColumnField
-    '        .PivotFields("DUEDT").Position = 1
-    '    End With
-
     'Combine by SIM
     With ActiveSheet.PivotTables("PivotTable1")
         .PivotFields("SIM").Orientation = xlRowField

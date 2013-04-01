@@ -120,7 +120,7 @@ End Sub
 ' Desc  : Imports gaps to the workbook containing this macro. Returns true upon success.
 ' Ex    : ImportGaps
 '---------------------------------------------------------------------------------------
-Sub ImportGaps()
+Function ImportGaps() As Boolean
     Dim sPath As String     'Gaps file path
     Dim sName As String     'Gaps Sheet Name
     Dim iCounter As Long    'Counter to decrement the date
@@ -205,14 +205,14 @@ Sub ImportGaps()
     End If
 
     Application.DisplayAlerts = True
-    Exit Sub
+    Exit Function
 
 CREATE_GAPS:
     ThisWorkbook.Sheets.Add After:=Sheets(ThisWorkbook.Sheets.Count)
     ActiveSheet.Name = "Gaps"
     Resume
 
-End Sub
+End Function
 
 '---------------------------------------------------------------------------------------
 ' Proc : FilterSheet
@@ -286,7 +286,7 @@ End Sub
 ' Date : 1/29/2013
 ' Desc : Prompts the user to select a file for import
 '---------------------------------------------------------------------------------------
-Sub UserImportFile(DestRange As Range)
+Sub UserImportFile(DestRange As Range, DelFile As Boolean)
     Dim StartTime As Double         'The time this function was started
     Dim File As String              'Full path to user selected file
     Dim FileDate As String          'Date the file was last modified
@@ -305,6 +305,10 @@ Sub UserImportFile(DestRange As Range)
         ActiveWorkbook.Close
         ThisWorkbook.Activate
 
+        If DelFile = True Then
+            DeleteFile File
+        End If
+
         FillInfo FunctionName:="UserImportFile", _
                  Parameters:="FileName: " & File, _
                  FileDate:=FileDate, _
@@ -315,12 +319,10 @@ Sub UserImportFile(DestRange As Range)
                  Parameters:="DestRange: " & DestRange.Address(False, False), _
                  Result:="Complete"
     Else
-        MsgBox "User aborted file import.", vbOKOnly, "Macro Stopped"
         FillInfo FunctionName:="UserImportFile", _
                  Parameters:="DestRange: " & DestRange.Address(False, False), _
                  ExecutionTime:=Timer - StartTime, _
                  Result:="Failed - User Aborted"
-        ThisWorkbook.Activate
         Sheets("Info").Select
         ERR.Raise 18
     End If
@@ -330,7 +332,7 @@ End Sub
 '---------------------------------------------------------------------------------------
 ' Proc : FillInfo
 ' Date : 1/29/2013
-' Desc :
+' Desc : Used to add a line to the Info sheet
 '---------------------------------------------------------------------------------------
 Sub FillInfo(FunctionName As String, Result As String, Optional ExecutionTime As String = "", Optional Parameters As String = "", Optional FileDate As String = "")
     Dim Info As Worksheet           'Info worksheet if it exists, else this = nothing
@@ -382,10 +384,10 @@ Sub ExportCode()
     Dim comp As Variant
     Dim codeFolder As String
     Dim FileName As String
-    
+
     AddReferences
     codeFolder = CombinePaths(GetWorkbookPath, "Code\" & Left(ThisWorkbook.Name, Len(ThisWorkbook.Name) - 5))
-    
+
     On Error Resume Next
     RecMkDir codeFolder
     On Error GoTo 0
@@ -414,8 +416,20 @@ End Sub
 ' Desc : Deletes a file
 '---------------------------------------------------------------------------------------
 Sub DeleteFile(FileName As String)
-    On Error Resume Next
+    On Error GoTo File_Error
     Kill FileName
+
+    FillInfo FunctionName:="DeleteFile", _
+             Parameters:=FileName, _
+             Result:="Complete"
+    Exit Sub
+
+File_Error:
+    FillInfo FunctionName:="DeleteFile", _
+             Result:="Err #: " & ERR.Number
+    FillInfo FunctionName:="", _
+             Result:="Err Description" & ERR.Description
+
 End Sub
 
 '---------------------------------------------------------------------------------------
@@ -494,4 +508,5 @@ Sub RemoveReferences()
         End If
     Next
 End Sub
+
 

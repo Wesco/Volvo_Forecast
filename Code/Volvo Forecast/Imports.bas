@@ -8,10 +8,10 @@ Sub ImportData()
 
     Sheets("Drop In").Select
 
-    UserImportFile Sheets("Drop In").Range("A1")
+    UserImportFile Sheets("Drop In").Range("A1"), True
     iRows = ActiveSheet.UsedRange.Rows.Count + 1
 
-    UserImportFile ActiveSheet.Cells(iRows, 1)
+    UserImportFile ActiveSheet.Cells(iRows, 1), True
     iRows = ActiveSheet.UsedRange.Rows.Count
     iCols = ActiveSheet.UsedRange.Columns.Count
 
