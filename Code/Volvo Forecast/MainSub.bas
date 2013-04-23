@@ -3,6 +3,7 @@ Option Explicit
 
 Sub Main()
     Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
     On Error GoTo ERROR
     ImportGaps
     ImportMaster
@@ -18,6 +19,7 @@ Sub Main()
     Email SendTo:="JBarnhill@wesco.com", _
           Subject:="Volvo Forecast", _
           Body:="""\\br3615gaps\gaps\Volvo\2013 Alerts\Slink Alert " & Format(Date, "m-dd-yy") & ".xlsx"""
+    Application.DisplayAlerts = True
     Application.ScreenUpdating = True
     Exit Sub
 

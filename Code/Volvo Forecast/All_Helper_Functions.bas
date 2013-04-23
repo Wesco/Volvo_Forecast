@@ -204,20 +204,11 @@ Sub ImportGaps()
                      ExecutionTime:=Timer - StartTime, _
                      Result:="Complete"
         Else
-            FillInfo FunctionName:="Gaps", _
-                     FileDate:=Format(dt, "mm/dd/yy"), _
-                     Parameters:="", _
-                     ExecutionTime:=Timer - StartTime, _
-                     Result:="Failed - User Aborted"
+            MsgBox Prompt:="User interrupt occurred", Title:="Error"
             ERR.Raise 18
         End If
     Else
         MsgBox Prompt:="Gaps could not be found.", Title:="Gaps not found"
-        FillInfo FunctionName:="Gaps", _
-                 FileDate:=Format(dt, "mm/dd/yy"), _
-                 Parameters:="", _
-                 ExecutionTime:=Timer - StartTime, _
-                 Result:="Failed - Gaps not found"
         ERR.Raise 53
     End If
 

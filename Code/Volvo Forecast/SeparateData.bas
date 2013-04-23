@@ -14,6 +14,7 @@ Sub SeparateNonStock()
     Range("A1").AutoFilter
     ActiveSheet.Range(Cells(1, 1), Cells(iRows, iCols)).AutoFilter Field:=1, Criteria1:="="
     ActiveSheet.UsedRange.Copy Destination:=Sheets("Non-Stock").Range("A1")
+    Application.DisplayAlerts = False
     ActiveSheet.UsedRange.Delete
     Rows("1:1").Select
     Selection.Insert Shift:=xlDown, CopyOrigin:=xlFormatFromLeftOrAbove
