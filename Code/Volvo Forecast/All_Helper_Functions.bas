@@ -6,6 +6,12 @@ Option Explicit
 'Example: "Sleep 1500" will pause for 1.5 seconds
 Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 
+'Used when importing 117 to determine the type of report to pull
+Enum ReportType
+    DS
+    Bo
+End Enum
+
 '---------------------------------------------------------------------------------------
 ' Proc  : Function FileExists
 ' Date  : 10/10/2012
@@ -90,14 +96,14 @@ Sub Email(SendTo As String, Optional CC As String, Optional BCC As String, Optio
                 For Each s In Attachment
                     If s <> Empty Then
                         If FileExists(s) = True Then
-                            .attachments.Add s
+                            Mail_Single.attachments.Add s
                         End If
                     End If
                 Next
             Case "String"
                 If Attachment <> Empty Then
                     If FileExists(Attachment) = True Then
-                        .attachments.Add Attachment
+                        Mail_Single.attachments.Add Attachment
                     End If
                 End If
         End Select
@@ -108,19 +114,30 @@ Sub Email(SendTo As String, Optional CC As String, Optional BCC As String, Optio
         .CC = CC
         .BCC = BCC
         .HTMLbody = Body
+        On Error GoTo SEND_FAILED
         .Send
+        On Error GoTo 0
     End With
+
     'Give the email time to send
     Sleep 1500
+    Exit Sub
+
+SEND_FAILED:
+    With Mail_Single
+        MsgBox "Mail to '" & .To & "' could not be sent."
+        .Delete
+    End With
+    Resume Next
 End Sub
 
 '---------------------------------------------------------------------------------------
-' Proc  : Function ImportGaps
+' Proc  : Sub ImportGaps
 ' Date  : 12/12/2012
-' Desc  : Imports gaps to the workbook containing this macro. Returns true upon success.
+' Desc  : Imports gaps to the workbook containing this macro.
 ' Ex    : ImportGaps
 '---------------------------------------------------------------------------------------
-Function ImportGaps() As Boolean
+Sub ImportGaps()
     Dim sPath As String     'Gaps file path
     Dim sName As String     'Gaps Sheet Name
     Dim iCounter As Long    'Counter to decrement the date
@@ -205,14 +222,14 @@ Function ImportGaps() As Boolean
     End If
 
     Application.DisplayAlerts = True
-    Exit Function
+    Exit Sub
 
 CREATE_GAPS:
     ThisWorkbook.Sheets.Add After:=Sheets(ThisWorkbook.Sheets.Count)
     ActiveSheet.Name = "Gaps"
     Resume
 
-End Function
+End Sub
 
 '---------------------------------------------------------------------------------------
 ' Proc : FilterSheet
@@ -286,21 +303,23 @@ End Sub
 ' Date : 1/29/2013
 ' Desc : Prompts the user to select a file for import
 '---------------------------------------------------------------------------------------
-Sub UserImportFile(DestRange As Range, DelFile As Boolean)
-    Dim StartTime As Double         'The time this function was started
+Sub UserImportFile(DestRange As Range, Optional DelFile As Boolean = False, Optional ShowAllData As Boolean = False)
     Dim File As String              'Full path to user selected file
     Dim FileDate As String          'Date the file was last modified
     Dim OldDispAlert As Boolean     'Original state of Application.DisplayAlerts
 
     OldDispAlert = Application.DisplayAlerts
-    StartTime = Timer
     File = Application.GetOpenFilename()
 
     Application.DisplayAlerts = False
     If File <> "False" Then
         FileDate = Format(FileDateTime(File), "mm/dd/yy")
         Workbooks.Open File
-
+        If ShowAllData = True Then
+            ActiveSheet.AutoFilter.ShowAllData
+            ActiveSheet.UsedRange.Columns.Hidden = False
+            ActiveSheet.UsedRange.Rows.Hidden = False
+        End If
         ActiveSheet.UsedRange.Copy Destination:=DestRange
         ActiveWorkbook.Close
         ThisWorkbook.Activate
@@ -308,25 +327,10 @@ Sub UserImportFile(DestRange As Range, DelFile As Boolean)
         If DelFile = True Then
             DeleteFile File
         End If
-
-        FillInfo FunctionName:="UserImportFile", _
-                 Parameters:="FileName: " & File, _
-                 FileDate:=FileDate, _
-                 ExecutionTime:=Timer - StartTime, _
-                 Result:="Complete"
-
-        FillInfo FunctionName:="", _
-                 Parameters:="DestRange: " & DestRange.Address(False, False), _
-                 Result:="Complete"
     Else
-        FillInfo FunctionName:="UserImportFile", _
-                 Parameters:="DestRange: " & DestRange.Address(False, False), _
-                 ExecutionTime:=Timer - StartTime, _
-                 Result:="Failed - User Aborted"
-        Sheets("Info").Select
         ERR.Raise 18
     End If
-
+    Application.DisplayAlerts = OldDispAlert
 End Sub
 
 '---------------------------------------------------------------------------------------
@@ -334,7 +338,7 @@ End Sub
 ' Date : 1/29/2013
 ' Desc : Used to add a line to the Info sheet
 '---------------------------------------------------------------------------------------
-Sub FillInfo(FunctionName As String, Result As String, Optional ExecutionTime As String = "", Optional Parameters As String = "", Optional FileDate As String = "")
+Sub FillInfo(Optional FunctionName As String = "", Optional Result As String = "", Optional ExecutionTime As String = "", Optional Parameters As String = "", Optional FileDate As String = "")
     Dim Info As Worksheet           'Info worksheet if it exists, else this = nothing
     Dim LastSheet As Worksheet      'The previously selected worksheet
     Dim LastWorkbook As Workbook    'The previously activated workbook
@@ -384,30 +388,78 @@ Sub ExportCode()
     Dim comp As Variant
     Dim codeFolder As String
     Dim FileName As String
+    Dim File As String
 
-    AddReferences
-    codeFolder = CombinePaths(GetWorkbookPath, "Code\" & Left(ThisWorkbook.Name, Len(ThisWorkbook.Name) - 5))
+    'References Microsoft Visual Basic for Applications Extensibility 5.3
+    AddReference "{0002E157-0000-0000-C000-000000000046}", 5, 3
+    codeFolder = GetWorkbookPath & "Code\" & Left(ThisWorkbook.Name, Len(ThisWorkbook.Name) - 5) & "\"
 
     On Error Resume Next
     RecMkDir codeFolder
     On Error GoTo 0
 
+    'Remove all previously exported modules
+    File = Dir(codeFolder)
+    Do While File <> ""
+        DeleteFile codeFolder & File
+        File = Dir
+    Loop
+
+    'Export modules in current project
     For Each comp In ThisWorkbook.VBProject.VBComponents
         Select Case comp.Type
             Case 1
-                FileName = CombinePaths(codeFolder, comp.Name & ".bas")
-                DeleteFile FileName
+                FileName = codeFolder & comp.Name & ".bas"
                 comp.Export FileName
             Case 2
-                FileName = CombinePaths(codeFolder, comp.Name & ".cls")
-                DeleteFile FileName
+                FileName = codeFolder & comp.Name & ".cls"
                 comp.Export FileName
             Case 3
-                FileName = CombinePaths(codeFolder, comp.Name & ".frm")
-                DeleteFile FileName
+                FileName = codeFolder & comp.Name & ".frm"
                 comp.Export FileName
         End Select
     Next
+End Sub
+
+'---------------------------------------------------------------------------------------
+' Proc : ImportModule
+' Date : 4/4/2013
+' Desc : Imports a code module into VBProject
+'---------------------------------------------------------------------------------------
+Sub ImportModule()
+    Dim comp As Variant
+    Dim codeFolder As String
+    Dim FileName As String
+    Dim WkbkPath As String
+
+    'Adds a reference to Microsoft Visual Basic for Applications Extensibility 5.3
+    AddReference "{0002E157-0000-0000-C000-000000000046}", 5, 3
+
+    'Gets the path to this workbook
+    WkbkPath = Left$(ThisWorkbook.fullName, InStr(1, ThisWorkbook.fullName, ThisWorkbook.Name, vbTextCompare) - 1)
+
+    'Gets the path to this workbooks code
+    codeFolder = WkbkPath & "Code\" & Left(ThisWorkbook.Name, Len(ThisWorkbook.Name) - 5) & "\"
+
+    For Each comp In ThisWorkbook.VBProject.VBComponents
+        If comp.Name <> "All_Helper_Functions" Then
+            Select Case comp.Type
+                Case 1
+                    FileName = codeFolder & comp.Name & ".bas"
+                    ThisWorkbook.VBProject.VBComponents.Remove comp
+                    ThisWorkbook.VBProject.VBComponents.Import FileName
+                Case 2
+                    FileName = codeFolder & comp.Name & ".cls"
+                    ThisWorkbook.VBProject.VBComponents.Remove comp
+                    ThisWorkbook.VBProject.VBComponents.Import FileName
+                Case 3
+                    FileName = codeFolder & comp.Name & ".frm"
+                    ThisWorkbook.VBProject.VBComponents.Remove comp
+                    ThisWorkbook.VBProject.VBComponents.Import FileName
+            End Select
+        End If
+    Next
+
 End Sub
 
 '---------------------------------------------------------------------------------------
@@ -415,21 +467,22 @@ End Sub
 ' Date : 3/19/2013
 ' Desc : Deletes a file
 '---------------------------------------------------------------------------------------
-Sub DeleteFile(FileName As String)
+Sub DeleteFile(FileName As String, Optional LogEntry As Boolean = False)
     On Error GoTo File_Error
     Kill FileName
 
-    FillInfo FunctionName:="DeleteFile", _
-             Parameters:=FileName, _
-             Result:="Complete"
+    If LogEntry = True Then
+        FillInfo FunctionName:="DeleteFile", _
+                 Parameters:=FileName, _
+                 Result:="Complete"
+    End If
     Exit Sub
 
 File_Error:
-    FillInfo FunctionName:="DeleteFile", _
-             Result:="Err #: " & ERR.Number
-    FillInfo FunctionName:="", _
-             Result:="Err Description" & ERR.Description
-
+    If LogEntry = True Then
+        FillInfo FunctionName:="DeleteFile", _
+                 Result:="Err #: " & ERR.Number
+    End If
 End Sub
 
 '---------------------------------------------------------------------------------------
@@ -451,18 +504,6 @@ Function GetWorkbookPath() As String
 End Function
 
 '---------------------------------------------------------------------------------------
-' Proc : CombinePaths
-' Date : 3/19/2013
-' Desc : Adds folders onto the end of a file path
-'---------------------------------------------------------------------------------------
-Function CombinePaths(ByVal Path1 As String, ByVal Path2 As String) As String
-    If Not EndsWith(Path1, "\") Then
-        Path1 = Path1 & "\"
-    End If
-    CombinePaths = Path1 & Path2
-End Function
-
-'---------------------------------------------------------------------------------------
 ' Proc : EndsWith
 ' Date : 3/19/2013
 ' Desc : Checks if a string ends in a specified character
@@ -474,39 +515,231 @@ End Function
 '---------------------------------------------------------------------------------------
 ' Proc : AddReferences
 ' Date : 3/19/2013
-' Desc : Adds references required for helper functions
+' Desc : Adds a reference to VBProject
 '---------------------------------------------------------------------------------------
-Sub AddReferences()
+Sub AddReference(GUID As String, Major As Integer, Minor As Integer)
     Dim ID As Variant
     Dim Ref As Variant
     Dim Result As Boolean
 
+
     For Each Ref In ThisWorkbook.VBProject.References
-        If Ref.GUID = "{0002E157-0000-0000-C000-000000000046}" And Ref.Major = 5 And Ref.Minor = 3 Then
+        If Ref.GUID = GUID And Ref.Major = Major And Ref.Minor = Minor Then
             Result = True
         End If
     Next
 
     'References Microsoft Visual Basic for Applications Extensibility 5.3
     If Result = False Then
-        ThisWorkbook.VBProject.References.AddFromGuid "{0002E157-0000-0000-C000-000000000046}", 5, 3
+        ThisWorkbook.VBProject.References.AddFromGuid GUID, Major, Minor
     End If
 End Sub
 
 '---------------------------------------------------------------------------------------
 ' Proc : RemoveReferences
 ' Date : 3/19/2013
-' Desc : Removes references required for helper functions
+' Desc : Removes a reference from VBProject
 '---------------------------------------------------------------------------------------
-Sub RemoveReferences()
+Sub RemoveReference(GUID As String, Major As Integer, Minor As Integer)
     Dim Ref As Variant
 
-    'References Microsoft Visual Basic for Applications Extensibility 5.3
     For Each Ref In ThisWorkbook.VBProject.References
-        If Ref.GUID = "{0002E157-0000-0000-C000-000000000046}" And Ref.Major = 5 And Ref.Minor = 3 Then
+        If Ref.GUID = GUID And Ref.Major = Major And Ref.Minor = Minor Then
             Application.VBE.ActiveVBProject.References.Remove Ref
         End If
     Next
 End Sub
 
+'---------------------------------------------------------------------------------------
+' Proc : ShowReferences
+' Date : 4/4/2013
+' Desc : Lists all VBProject references
+'---------------------------------------------------------------------------------------
+Sub ShowReferences()
+    Dim i As Variant
+    Dim n As Integer
 
+    ThisWorkbook.Activate
+    On Error GoTo SHEET_EXISTS
+    Sheets("VBA References").Select
+    ActiveSheet.Cells.Delete
+    On Error GoTo 0
+
+    [A1].Value = "Name"
+    [B1].Value = "Description"
+    [C1].Value = "GUID"
+    [D1].Value = "Major"
+    [E1].Value = "Minor"
+
+    For i = 1 To ThisWorkbook.VBProject.References.Count
+        n = i + 1
+        With ThisWorkbook.VBProject.References(i)
+            Cells(n, 1).Value = .Name
+            Cells(n, 2).Value = .Description
+            Cells(n, 3).Value = .GUID
+            Cells(n, 4).Value = .Major
+            Cells(n, 5).Value = .Minor
+        End With
+    Next
+    Columns.AutoFit
+
+    Exit Sub
+
+SHEET_EXISTS:
+    ThisWorkbook.Sheets.Add After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count), Count:=1
+    ActiveSheet.Name = "VBA References"
+    Resume Next
+End Sub
+
+'---------------------------------------------------------------------------------------
+' Proc : Import117byISN
+' Date : 4/10/2013
+' Desc : Imports the most recent 117 report for the specified sales number
+'---------------------------------------------------------------------------------------
+Sub Import117byISN(RepType As ReportType, Destination As Range, Optional ByVal ISN As String = "", Optional Cancel As Boolean = False)
+    Dim sPath As String
+    Dim FileName As String
+
+    If ISN = "" And Cancel = False Then
+        ISN = InputBox("Inside Sales Number:", "Please enter the ISN#")
+    Else
+        If ISN = "" Then
+            FillInfo "Import117byISN", "Failed - User Aborted", Parameters:="ReportType: " & ReportTypeText(RepType)
+            ERR.Raise 53
+        End If
+    End If
+
+    If ISN <> "" Then
+        Select Case RepType
+            Case ReportType.DS:
+                FileName = "3615 " & Format(Date, "m-dd-yy") & " DSORDERS.xlsx"
+
+            Case ReportType.Bo:
+                FileName = "3615 " & Format(Date, "m-dd-yy") & " BACKORDERS.xlsx"
+        End Select
+
+        sPath = "\\br3615gaps\gaps\3615 117 Report\ByInsideSalesNumber\" & ISN & "\" & FileName
+
+        If FileExists(sPath) Then
+            Workbooks.Open sPath
+            ActiveSheet.UsedRange.Copy Destination:=Destination
+            Application.DisplayAlerts = False
+            ActiveWorkbook.Close
+            Application.DisplayAlerts = True
+
+            FillInfo FunctionName:="Import117byISN", _
+                     Parameters:="Sales #: " & ISN, _
+                     Result:="Complete"
+            FillInfo Parameters:="Report Type: " & ReportTypeText(RepType)
+            FillInfo Parameters:="Destination: " & Destination.Address(False, False)
+        Else
+            FillInfo FunctionName:="Import117byISN", _
+                     Parameters:="Sales #: " & ISN, _
+                     Result:="Failed - File not found"
+            FillInfo Parameters:="Report Type: " & ReportTypeText(RepType)
+            FillInfo Parameters:="Destination: " & Destination.Address(False, False)
+            MsgBox Prompt:=ReportTypeText(RepType) & " report not found.", Title:="Error 53"
+        End If
+    Else
+        FillInfo "Import117byISN", "Failed - Missing ISN", Parameters:="ReportType: " & ReportTypeText(RepType)
+        ERR.Raise 18
+    End If
+
+End Sub
+
+'---------------------------------------------------------------------------------------
+' Proc : Import473
+' Date : 4/11/2013
+' Desc : Imports a 473 report from the current day
+'---------------------------------------------------------------------------------------
+Sub Import473(Destination As Range, Optional Branch As String = "3615")
+    Dim sPath As String
+    Dim FileName As String
+    Dim AlertStatus As Boolean
+
+    FileName = "473 " & Format(Date, "m-dd-yy") & ".xlsx"
+    sPath = "\\br3615gaps\gaps\" & Branch & " 473 Download\" & FileName
+    AlertStatus = Application.DisplayAlerts
+
+    If FileExists(sPath) Then
+        Workbooks.Open sPath
+        ActiveSheet.UsedRange.Copy Destination:=Destination
+
+        Application.DisplayAlerts = False
+        ActiveWorkbook.Close
+        Application.DisplayAlerts = AlertStatus
+    Else
+        MsgBox Prompt:="473 report not found."
+        ERR.Raise 18
+    End If
+
+End Sub
+
+'---------------------------------------------------------------------------------------
+' Proc : ReportTypeText
+' Date : 4/10/2013
+' Desc : Returns the report type as a string
+'---------------------------------------------------------------------------------------
+Function ReportTypeText(RepType As ReportType) As String
+    Select Case RepType
+        Case ReportType.Bo:
+            ReportTypeText = "BO"
+        Case ReportType.DS:
+            ReportTypeText = "DS"
+    End Select
+End Function
+
+'---------------------------------------------------------------------------------------
+' Proc : DeleteColumn
+' Date : 4/11/2013
+' Desc : Removes a column based on text in the column header
+'---------------------------------------------------------------------------------------
+Sub DeleteColumn(HeaderText As String)
+    Dim i As Integer
+
+    For i = ActiveSheet.UsedRange.Columns.Count To 1 Step -1
+        If Trim(Cells(1, i).Value) = HeaderText Then
+            Columns(i).Delete
+            Exit For
+        End If
+    Next
+End Sub
+
+'---------------------------------------------------------------------------------------
+' Proc : FindColumn
+' Date : 4/11/2013
+' Desc : Returns the column number if a match is found
+'---------------------------------------------------------------------------------------
+Function FindColumn(HeaderText As String, Optional SearchArea As Range) As Integer
+    Dim i As Integer: i = 0
+
+    If TypeName(SearchArea) = Empty Then
+        SearchArea = ActiveSheet.UsedRange
+    End If
+
+    For i = 1 To SearchArea.Columns.Count
+        If Trim(SearchArea.Cells(1, i).Value) = HeaderText Then
+            FindColumn = i
+            Exit For
+        End If
+    Next
+End Function
+
+'---------------------------------------------------------------------------------------
+' Proc : ImportSupplierContacts
+' Date : 4/22/2013
+' Desc : Imports the supplier contact master list
+'---------------------------------------------------------------------------------------
+Sub ImportSupplierContacts(Destination As Range)
+    Const sPath As String = "\\br3615gaps\gaps\Contacts\Supplier Contact Master.xlsx"
+    Dim PrevDispAlerts As Boolean
+
+    PrevDispAlerts = Application.DisplayAlerts
+
+    Workbooks.Open sPath
+    ActiveSheet.UsedRange.Copy Destination:=Destination
+    
+    Application.DisplayAlerts = False
+    ActiveWorkbook.Close
+    Application.DisplayAlerts = PrevDispAlerts
+End Sub

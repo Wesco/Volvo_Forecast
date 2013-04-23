@@ -2,8 +2,7 @@ Attribute VB_Name = "MainSub"
 Option Explicit
 
 Sub Main()
-    Sheets("Info").Cells.Delete
-
+    Application.ScreenUpdating = False
     On Error GoTo ERROR
     ImportGaps
     ImportMaster
@@ -19,6 +18,7 @@ Sub Main()
     Email SendTo:="JBarnhill@wesco.com", _
           Subject:="Volvo Forecast", _
           Body:="""\\br3615gaps\gaps\Volvo\2013 Alerts\Slink Alert " & Format(Date, "m-dd-yy") & ".xlsx"""
+    Application.ScreenUpdating = True
     Exit Sub
 
 ERROR:
