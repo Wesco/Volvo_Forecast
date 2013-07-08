@@ -149,9 +149,6 @@ Sub ImportGaps()
     Dim FileFound As Boolean        'Indicates whether or not gaps was found
 
     StartTime = Timer
-    dt = Date - iCounter
-    sPath = "\\br3615gaps\gaps\3615 Gaps Download\" & Format(dt, "yyyy") & "\"
-    sName = "3615 " & Format(dt, "m-dd-yy") & ".xlsx"
     FileFound = False
 
     'This error is bypassed so you can determine whether or not the sheet exists
@@ -165,7 +162,7 @@ Sub ImportGaps()
     For iCounter = 0 To 15
         dt = Date - iCounter
         sPath = "\\br3615gaps\gaps\3615 Gaps Download\" & Format(dt, "yyyy") & "\"
-        sName = "3615 " & Format(dt, "m-dd-yy") & ".xlsx"
+        sName = "3615 " & Format(dt, "yyyy-mm-dd") & ".xlsx"
         If FileExists(sPath & sName) Then
             FileFound = True
             Exit For
