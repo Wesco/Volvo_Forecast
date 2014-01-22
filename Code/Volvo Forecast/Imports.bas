@@ -36,7 +36,7 @@ Sub ImportExpediteNotes()
     Dim i As Integer
 
     For i = 1 To 14
-        sPath = "\\br3615gaps\gaps\Volvo\2013 Alerts\Slink Alert " & Format(Date - i, "m-dd-yy") & ".xlsx"
+        sPath = "\\br3615gaps\gaps\Volvo\" & Format(Date, "yyyy") & " Alerts\Slink Alert " & Format(Date - i, "m-dd-yy") & ".xlsx"
         If FileExists(sPath) Then
             Workbooks.Open sPath
             Sheets("Expedite").Select
