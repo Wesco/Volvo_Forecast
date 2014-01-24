@@ -1,4 +1,4 @@
-Attribute VB_Name = "MainSub"
+Attribute VB_Name = "Program"
 Option Explicit
 
 Sub Main()
