@@ -15,7 +15,7 @@ Sub ExportForecast()
 
     FilePath = "\\br3615gaps\gaps\Volvo\" & Format(Date, "yyyy") & " Alerts\"
     FileName = "Slink Alert " & Format(Date, "m-dd-yy") & ".xlsx"
-    If Not FolderExists(FilePath) Then RecMkDir
+    If Not FolderExists(FilePath) Then RecMkDir FilePath
 
     ActiveWorkbook.Sheets(1).Select
     ActiveWorkbook.SaveAs FilePath & FileName, xlOpenXMLWorkbook
@@ -23,7 +23,7 @@ Sub ExportForecast()
 
     FilePath = "\\br3615gaps\gaps\Volvo\" & Format(Date, "yyyy") & " Slink\"
     FileName = "Combined " & Format(Date, "m-dd-yy") & ".xlsx"
-    If Not FolderExists(FilePath) Then RecMkDir
+    If Not FolderExists(FilePath) Then RecMkDir FilePath
 
     Sheets("Temp").Copy
     ActiveWorkbook.SaveAs FilePath & FileName, xlOpenXMLWorkbook
