@@ -17,7 +17,7 @@ Sub Main()
     ExportForecast
     MsgBox ("Complete!")
     Email SendTo:="JBarnhill@wesco.com", _
-          CC:="ABridges@wesco.com", _
+          CC:="ACoffey@wesco.com", _
           Subject:="Volvo Forecast", _
           Body:="""\\br3615gaps\gaps\Volvo\2013 Alerts\Slink Alert " & Format(Date, "m-dd-yy") & ".xlsx"""
     Application.DisplayAlerts = True
