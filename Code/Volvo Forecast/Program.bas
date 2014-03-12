@@ -19,7 +19,7 @@ Sub Main()
     Email SendTo:="JBarnhill@wesco.com", _
           CC:="ACoffey@wesco.com", _
           Subject:="Volvo Forecast", _
-          Body:="""\\br3615gaps\gaps\Volvo\2013 Alerts\Slink Alert " & Format(Date, "m-dd-yy") & ".xlsx"""
+          Body:="""\\br3615gaps\gaps\Volvo\" & Format(Date, "yyyy") & " Alerts\Slink Alert " & Format(Date, "m-dd-yy") & ".xlsx"""
     Application.DisplayAlerts = True
     Application.ScreenUpdating = True
     Exit Sub
