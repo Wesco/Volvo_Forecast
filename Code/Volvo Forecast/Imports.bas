@@ -13,7 +13,7 @@ Sub ImportData()
 
     UserImportFile ActiveSheet.Cells(iRows, 1), True
     iRows = ActiveSheet.UsedRange.Rows.Count + 1
-    
+
     UserImportFile ActiveSheet.Cells(iRows, 1), True
     iRows = ActiveSheet.UsedRange.Rows.Count
     iCols = ActiveSheet.UsedRange.Columns.Count
@@ -54,16 +54,15 @@ Sub ImportExpediteNotes()
 
             Cells(2, TotalCols).Formula = "=IFERROR(IF(VLOOKUP(A2,'Expedite Notes'!A:B,2,FALSE)=0,"""",VLOOKUP(A2,'Expedite Notes'!A:B,2,FALSE)),"""")"
             Cells(2, TotalCols).AutoFill Destination:=Range(Cells(2, TotalCols), Cells(TotalRows, TotalCols))
-            
+
             With Range(Cells(2, TotalCols), Cells(TotalRows, TotalCols))
                 .Value = .Value
             End With
-            
+
             Exit For
         End If
     Next
 End Sub
-
 
 Sub ImportMaster()
     Dim sPath As String
@@ -83,4 +82,3 @@ Sub ImportMaster()
     Wkbk.Close
     Sheets("Macro").Select
 End Sub
-
