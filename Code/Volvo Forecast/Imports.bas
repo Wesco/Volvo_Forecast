@@ -65,20 +65,25 @@ Sub ImportExpediteNotes()
 End Sub
 
 Sub ImportMaster()
-    Dim sPath As String
+    Const Path As String = "\\br3615gaps\gaps\Billy Mac-Master Lists\"
     Dim Wkbk As Workbook
+    Dim File As String
 
-    sPath = "\\br3615gaps\gaps\Billy Mac-Master Lists\Volvo Master List " & Format(Date, "yyyy") & ".xlsx"
-    ThisWorkbook.Sheets("Master").Cells.Delete
-    Workbooks.Open FileName:=sPath
+    File = "Volvo Master List " & Format(Date, "yyyy") & ".xlsx"
+
+    Workbooks.Open Path & File
     Set Wkbk = ActiveWorkbook
+    Sheets("ACTIVE").Select
     ActiveSheet.UsedRange.Copy
+
     ThisWorkbook.Activate
-    Sheets("Master").Range("A1").PasteSpecial Paste:=xlPasteValues, _
-                                              Operation:=xlNone, _
-                                              SkipBlanks:=False, _
-                                              Transpose:=False
+    Sheets("Master").Select
+    Range("A1").PasteSpecial Paste:=xlPasteValues, _
+                             Operation:=xlNone, _
+                             SkipBlanks:=False, _
+                             Transpose:=False
     Application.CutCopyMode = False
     Wkbk.Close
+    
     Sheets("Macro").Select
 End Sub
