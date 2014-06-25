@@ -34,16 +34,16 @@ Sub Clean()
     Dim s As Variant
 
     ThisWorkbook.Activate
-    
+
     For Each s In ThisWorkbook.Sheets
-        If s.Name <> "Master" And s.Name <> "Macro" Then
+        If s.Name <> "Macro" Then
             s.Select
             s.AutoFilterMode = False
             s.Cells.Delete
             s.Range("A1").Select
         End If
     Next
-    
+
     Sheets("Macro").Select
     Range("C8").Select
 End Sub
