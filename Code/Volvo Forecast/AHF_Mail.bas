@@ -86,7 +86,7 @@ Sub Email(SendTo As String, Optional CC As String, Optional BCC As String, Optio
         Sleep 1500
     End If
 
-    Exit Function
+    Exit Sub
 
 SEND_FAILED:
     With Mail_Single
@@ -94,4 +94,4 @@ SEND_FAILED:
         .Delete
     End With
     Resume Next
-End Function
+End Sub
