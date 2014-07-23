@@ -47,16 +47,13 @@ Sub ImportGaps(Optional Destination As Range, Optional SimsAsText As Boolean = T
         If Result <> vbNo Then
             ThisWorkbook.Activate
             Sheets(Destination.Parent.Name).Select
-            
+
             'If there is data on the destination sheet delete it
             If Range("A1").Value <> "" Then
                 Cells.Delete
             End If
 
-            Workbooks.Open Path & Name
-            ActiveSheet.UsedRange.Copy Destination:=Destination
-            ActiveWorkbook.Close
-
+            ImportCsvAsText Path, Name, Sheets("Gaps").Range("A1")
             TotalRows = ActiveSheet.UsedRange.Rows.Count
             Columns(1).Insert
             Range("A1").Value = "SIM"
@@ -84,6 +81,77 @@ CREATE_GAPS:
     ActiveSheet.Name = "Gaps"
     Resume
 
+End Sub
+
+'---------------------------------------------------------------------------------------
+' Proc : ImportCsvAsText
+' Date : 7/1/2014
+' Desc : Import a CSV file with all fields as text
+'---------------------------------------------------------------------------------------
+Sub ImportCsvAsText(Path As String, File As String, Destination As Range)
+    Dim Name As String
+    Dim FileNo As Integer
+    Dim TotalCols As Long
+    Dim ColHeaders As String
+    Dim ColFormat As Variant
+    Dim i As Long
+
+
+    'Make sure path ends with a trailing slash
+    If Right(Path, 1) <> "\" Then Path = Path & "\"
+
+    'If the file exists open it
+    If FileExists(Path & File) Then
+        Name = Left(File, InStrRev(File, ".") - 1)
+
+        'Read first line of file to figure out how many columns there are
+        FileNo = FreeFile()
+        Open Path & File For Input As #FileNo
+        Line Input #FileNo, ColHeaders
+        Close #FileNo
+
+        TotalCols = UBound(Split(ColHeaders, ",")) + 1
+
+        'Set column format to 2 (text) for all columns
+        ReDim ColFormat(1 To TotalCols)
+        For i = 1 To TotalCols
+            ColFormat(i) = 2
+        Next
+
+        'Import CSV
+        With ActiveSheet.QueryTables.Add(Connection:="TEXT;" & Path & File, Destination:=Destination)
+            .Name = Name
+            .FieldNames = True
+            .RowNumbers = False
+            .FillAdjacentFormulas = False
+            .PreserveFormatting = True
+            .RefreshOnFileOpen = False
+            .RefreshStyle = xlInsertDeleteCells
+            .SavePassword = False
+            .SaveData = True
+            .AdjustColumnWidth = True
+            .RefreshPeriod = 0
+            .TextFilePromptOnRefresh = False
+            .TextFilePlatform = 437
+            .TextFileStartRow = 1
+            .TextFileParseType = xlDelimited
+            .TextFileTextQualifier = xlTextQualifierDoubleQuote
+            .TextFileConsecutiveDelimiter = False
+            .TextFileTabDelimiter = False
+            .TextFileSemicolonDelimiter = False
+            .TextFileCommaDelimiter = True
+            .TextFileSpaceDelimiter = False
+            .TextFileColumnDataTypes = ColFormat
+            .TextFileTrailingMinusNumbers = True
+            .Refresh BackgroundQuery:=False
+        End With
+
+        'Remove the connection
+        ActiveWorkbook.Connections(Name).Delete
+        ActiveSheet.QueryTables(ActiveSheet.QueryTables.Count).Delete
+    Else
+        ERR.Raise 53, "OpenCsvAsText", "File not found"
+    End If
 End Sub
 
 '---------------------------------------------------------------------------------------
