@@ -82,6 +82,10 @@ Sub RecMkDir(ByVal sPath As String)
 
     'Determine where in the array to start the loop
     If sDrive = "\\" & sDirArray(2) & "\" Then
+        If Not FolderExists(sDrive & sDirArray(3)) Then
+            ERR.Raise 76, "RecMkDir", "Network share not found."
+        End If
+
         LoopStart = 3
     Else
         LoopStart = 1
