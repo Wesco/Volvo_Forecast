@@ -1,6 +1,9 @@
 Attribute VB_Name = "Program"
 Option Explicit
 
+Public Const VersionNumber As String = "1.0.0"
+Public Const RepositoryName As String = "Volvo_Forecast"
+
 Sub Main()
     Application.ScreenUpdating = False
     Application.DisplayAlerts = False
