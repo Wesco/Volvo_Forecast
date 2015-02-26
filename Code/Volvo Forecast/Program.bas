@@ -19,10 +19,10 @@ Sub Main()
     ImportExpediteNotes
     ExportForecast
     MsgBox ("Complete!")
-    Email SendTo:="JBarnhill@wesco.com", _
-          CC:="ACoffey@wesco.com", _
+    Email SendTo:="jogardner@wesco.com; jlquatra@wesco.com; bford@wesco.com", _
           Subject:="Volvo Forecast", _
-          Body:="""\\br3615gaps\gaps\Volvo\" & Format(Date, "yyyy") & " Alerts\Slink Alert " & Format(Date, "m-dd-yy") & ".xlsx"""
+          Body:="A new forecast is available on the network <a href=""\\br3615gaps\gaps\Volvo\" & _
+                Format(Date, "yyyy") & " Alerts\Slink Alert " & Format(Date, "m-dd-yy") & ".xlsx""" & ">here</a>."
     Application.DisplayAlerts = True
     Application.ScreenUpdating = True
     Exit Sub
