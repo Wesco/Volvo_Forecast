@@ -5,10 +5,14 @@ Public Const VersionNumber As String = "1.0.0"
 Public Const RepositoryName As String = "Volvo_Forecast"
 
 Sub Main()
+    Dim Branch As String
+
     Application.ScreenUpdating = False
     Application.DisplayAlerts = False
     On Error GoTo ERROR
-    ImportGaps SimsAsText:=False
+    Branch = InputBox("Enter your branch number", "Branch Entry")
+    If Branch = "" Then Exit Sub
+    ImportGaps SimsAsText:=False, Branch:=Branch
     ImportMaster
     ImportData
     On Error GoTo 0
