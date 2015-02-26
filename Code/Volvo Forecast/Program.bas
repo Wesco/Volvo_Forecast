@@ -27,6 +27,7 @@ Sub Main()
           Subject:="Volvo Forecast", _
           Body:="A new forecast is available on the network <a href=""\\br3615gaps\gaps\Volvo\" & _
                 Format(Date, "yyyy") & " Alerts\Slink Alert " & Format(Date, "m-dd-yy") & ".xlsx""" & ">here</a>."
+    Clean
     Application.DisplayAlerts = True
     Application.ScreenUpdating = True
     Exit Sub
